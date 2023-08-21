@@ -34,6 +34,19 @@ func run() error {
 
 	sf, _ := snowflake.NewNode(1)
 
+	_, err = db.NewInsert().Model(&sqlmodel.Role{
+		Name: "staff",
+	}).Exec(context.Background())
+	if err != nil {
+		return err
+	}
+	_, err = db.NewInsert().Model(&sqlmodel.Status{
+		Name: "active",
+	}).Exec(context.Background())
+	if err != nil {
+		return err
+	}
+
 	var role sqlmodel.Role
 	err = db.NewSelect().Model(&role).Where("name = ?", "staff").Scan(context.Background())
 	if err != nil {
@@ -47,6 +60,8 @@ func run() error {
 	if err != nil {
 		return err
 	}
+
+	fmt.Println(status)
 
 	user := &sqlmodel.User{
 		ID:             sf.Generate().Int64(),
