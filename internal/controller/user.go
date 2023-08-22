@@ -18,8 +18,12 @@ type UserController struct {
 
 var _ userapiv1.UserServiceServer = (*UserController)(nil)
 
-func NewUserController() *UserController {
-	return &UserController{}
+func NewUserController(
+	userSvc service.UserService,
+) *UserController {
+	return &UserController{
+		userSvc: userSvc,
+	}
 }
 
 func (uc *UserController) CreateUser(ctx context.Context, req *userapiv1.CreateUserRequest) (*userapiv1.CreateUserResponse, error) {
@@ -32,8 +36,8 @@ func (uc *UserController) CreateUser(ctx context.Context, req *userapiv1.CreateU
 		Status:   req.Status,
 	})
 	if err != nil {
-		return nil, status.Error(codes.Code(code.Code_UNKNOWN), "not created")
+		return &userapiv1.CreateUserResponse{}, status.Error(codes.Code(code.Code_UNKNOWN), "not created")
 	}
 
-	return nil, status.Error(codes.Code(code.Code_OK), "create")
+	return &userapiv1.CreateUserResponse{}, status.Error(codes.Code(code.Code_OK), "created")
 }

@@ -1,4 +1,4 @@
-package impl
+package service
 
 import (
 	"context"
@@ -18,8 +18,14 @@ type UserService struct {
 
 var _ service.UserService = (*UserService)(nil)
 
-func NewUserService() *UserService {
-	return &UserService{}
+func NewUserService(
+	userRepo repository.UserRepo,
+	snow *snowflake.Node,
+) *UserService {
+	return &UserService{
+		userRepo: userRepo,
+		snow:     snow,
+	}
 }
 
 func (us *UserService) Create(ctx context.Context, u model.RawUser) error {
