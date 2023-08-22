@@ -15,6 +15,7 @@ type User struct {
 	HashedPassword string    `bun:"hashed_password"`
 	Email          string    `bun:"email"`
 	Created_at     time.Time `bun:"created_at"`
+	TOTPIsActive   bool      `bun:"totp_is_active"`
 	TOTPSecret     string    `bun:"totp_secret"`
 	Role           int32     `bun:"role_id"`
 	Status         int32     `bun:"status_id"`

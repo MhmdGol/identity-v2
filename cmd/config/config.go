@@ -3,9 +3,10 @@ package config
 import "github.com/spf13/viper"
 
 type Config struct {
-	HttpPort string   `mapstructure:"HTTP_PORT"`
-	Database Database `mapstructure:",squash"`
-	Redis    Redis    `mapstructure:",squash"`
+	HttpPort      string   `mapstructure:"HTTP_PORT"`
+	SnowflakeNode string   `mapstructure:"SF_NODE"`
+	Database      Database `mapstructure:",squash"`
+	Redis         Redis    `mapstructure:",squash"`
 }
 
 type Database struct {
@@ -29,6 +30,7 @@ func Load() (Config, error) {
 	viper.ReadInConfig()
 
 	viper.BindEnv("HTTP_PORT")
+	viper.BindEnv("SF_NODE")
 	viper.BindEnv("DB_USERNAME")
 	viper.BindEnv("DB_PASSWORD")
 	viper.BindEnv("DB_HOST")

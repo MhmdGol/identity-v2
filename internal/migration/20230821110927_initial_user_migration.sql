@@ -7,6 +7,7 @@ CREATE TABLE users(
     hashed_password VARCHAR(255),
     email VARCHAR(255) UNIQUE,
     created_at DATETIME,
+    totp_is_active BIT,
     totp_secret VARCHAR(255),
     role_id INT,
     status_id INT,

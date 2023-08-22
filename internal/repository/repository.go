@@ -1,7 +1,10 @@
 package repository
 
-import "context"
+import (
+	"context"
+	"identity-v2/internal/model"
+)
 
 type UserRepo interface {
-	Create(context.Context)
+	Create(context.Context, model.UserInfo) error
 }

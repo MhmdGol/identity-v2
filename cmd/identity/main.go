@@ -8,6 +8,7 @@ import (
 	"identity-v2/internal/store"
 	"log"
 	"os"
+	"strconv"
 	"time"
 
 	"github.com/bwmarrin/snowflake"
@@ -32,7 +33,17 @@ func run() error {
 		return err
 	}
 
-	sf, _ := snowflake.NewNode(1)
+	node, _ := strconv.Atoi(conf.SnowflakeNode)
+	if err != nil {
+		return err
+	}
+
+	sf, err := snowflake.NewNode(int64(node))
+	if err != nil {
+		return err
+	}
+
+	// --------------------------------------------------------------------------------
 
 	_, err = db.NewInsert().Model(&sqlmodel.Role{
 		Name: "staff",
@@ -79,6 +90,8 @@ func run() error {
 	if err != nil {
 		return err
 	}
+
+	// --------------------------------------------------------------------------------
 
 	return nil
 }

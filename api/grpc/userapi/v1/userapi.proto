@@ -1,0 +1,18 @@
+syntax = "proto3";
+
+package identity.userapi.v1;
+
+service UserService {
+    rpc CreateUser(CreateUserRequest) returns (CreateUserResponse); 
+}
+
+message CreateUserRequest {
+    string uun = 1;
+    string username = 2;
+    string password = 3;
+    string email = 4;
+    string role = 5;
+    string status = 6;
+}
+
+message CreateUserResponse {}
