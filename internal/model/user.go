@@ -1,6 +1,8 @@
 package model
 
-import "time"
+import (
+	"time"
+)
 
 type RawUser struct {
 	ID       ID
@@ -23,4 +25,10 @@ type UserInfo struct {
 	TOTPSecret     string
 	Role           string
 	Status         string
+}
+
+type LoginInfo struct {
+	Email    string
+	Password string
+	TOTPCode string
 }

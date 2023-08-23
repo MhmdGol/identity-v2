@@ -2,7 +2,6 @@ package sql
 
 import (
 	"context"
-	"fmt"
 	"identity-v2/internal/model"
 	"identity-v2/internal/repository"
 	"identity-v2/internal/repository/sql/sqlmodel"
@@ -26,14 +25,12 @@ func (ur *UserRepo) Create(ctx context.Context, u model.UserInfo) error {
 	var role sqlmodel.Role
 	err := ur.db.NewSelect().Model(&role).Where("name = ?", u.Role).Scan(ctx)
 	if err != nil {
-		fmt.Println(1, err)
 		return err
 	}
 
 	var status sqlmodel.Status
 	err = ur.db.NewSelect().Model(&status).Where("name = ?", u.Status).Scan(ctx)
 	if err != nil {
-		fmt.Println(2, err)
 		return err
 	}
 
@@ -51,7 +48,40 @@ func (ur *UserRepo) Create(ctx context.Context, u model.UserInfo) error {
 	}
 
 	_, err = ur.db.NewInsert().Model(&newUser).Exec(ctx)
-	fmt.Println(3, err)
 
 	return err
+}
+
+func (ur *UserRepo) ByEmail(ctx context.Context, e string) (model.UserInfo, error) {
+	var user sqlmodel.User
+	err := ur.db.NewSelect().Model(&user).Where("email = ?", e).Scan(ctx)
+	if err != nil {
+		return model.UserInfo{}, err
+	}
+
+	var role sqlmodel.Role
+	err = ur.db.NewSelect().Model(&role).Where("id = ?", user.Role).Scan(ctx)
+	if err != nil {
+		return model.UserInfo{}, err
+	}
+
+	var status sqlmodel.Status
+	err = ur.db.NewSelect().Model(&status).Where("id = ?", user.Status).Scan(ctx)
+
+	if err != nil {
+		return model.UserInfo{}, err
+	}
+
+	return model.UserInfo{
+		ID:             model.ID(user.ID),
+		UUN:            user.UUN,
+		Username:       user.Username,
+		HashedPassword: user.HashedPassword,
+		Email:          user.Email,
+		Created_at:     user.Created_at,
+		TOTPIsActive:   user.TOTPIsActive,
+		TOTPSecret:     user.TOTPSecret,
+		Role:           role.Name,
+		Status:         status.Name,
+	}, nil
 }

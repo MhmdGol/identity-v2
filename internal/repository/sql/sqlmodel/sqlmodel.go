@@ -38,9 +38,10 @@ type Status struct {
 type Track struct {
 	bun.BaseModel `bun:"table:tracks"`
 
-	ID     int32 `bun:"id,pk,autoincrement"`
-	UserID int64 `bun:"user_id"`
-	Action int32 `bun:"action"`
+	ID         int32     `bun:"id,pk,autoincrement"`
+	UserID     int64     `bun:"user_id"`
+	Action     int32     `bun:"action"`
+	ActionTime time.Time `bun:"action_time"`
 }
 
 type Action struct {
@@ -56,4 +57,14 @@ type Session struct {
 	ID     int32     `bun:"id,pk,autoincrement"`
 	UserID int64     `bun:"user_id"`
 	Exp    time.Time `bun:"exp"`
+}
+
+type LoginAttempts struct {
+	bun.BaseModel `bun:"table:login_attempts"`
+
+	ID          int32     `bun:"id,pk,autoincrement"`
+	UserID      int64     `bun:"user_id"`
+	Attempts    int32     `bun:"attempts"`
+	LastAttempt time.Time `bun:"last_attempt"`
+	BanExpiry   time.Time `bun:"ban_expiry"`
 }

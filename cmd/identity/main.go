@@ -4,10 +4,12 @@ import (
 	"fmt"
 	"identity-v2/cmd/config"
 	"identity-v2/internal/controller"
+	authapiv1 "identity-v2/internal/proto/authapi/v1"
 	userapiv1 "identity-v2/internal/proto/userapi/v1"
 	"identity-v2/internal/repository/sql"
 	service "identity-v2/internal/service/impl"
 	"identity-v2/internal/store"
+	"identity-v2/pkg/jwt"
 	"log"
 	"net"
 	"os"
@@ -42,6 +44,11 @@ func run() error {
 	}
 
 	sf, err := snowflake.NewNode(int64(node))
+	if err != nil {
+		return err
+	}
+
+	j, err := jwt.NewJwtHandler(conf.RSAPair)
 	if err != nil {
 		return err
 	}
@@ -94,11 +101,29 @@ func run() error {
 	// 	return err
 	// }
 
+	// userSecret, _ := totp.Generate(totp.GenerateOpts{
+	// 	Issuer:      "IdentityServer",
+	// 	AccountName: "mhmd",
+	// })
+
+	// fmt.Println(userSecret.Secret())
+
+	// isValid := totp.Validate("751994", "XVVKYV5ARYAMEAKE465JXX25AQTKLO73")
+	// if !isValid {
+	// 	fmt.Println("Failed")
+	// }
+
 	// --------------------------------------------------------------------------------
 
 	userRepo := sql.NewUserRepo(db)
+	trackRepo := sql.NewTrackRepo(db)
+	sessionRepo := sql.NewSessionRepo(db)
+
 	userSvc := service.NewUserService(userRepo, sf)
+	authSvc := service.NewAuthService(userRepo, sessionRepo, trackRepo, j)
+
 	userCtrl := controller.NewUserController(userSvc)
+	authCtrl := controller.NewAuthController(authSvc)
 
 	lis, err := net.Listen("tcp", fmt.Sprintf(":%s", conf.HttpPort))
 	if err != nil {
@@ -107,6 +132,7 @@ func run() error {
 
 	server := grpc.NewServer()
 	userapiv1.RegisterUserServiceServer(server, userCtrl)
+	authapiv1.RegisterAuthServiceServer(server, authCtrl)
 
 	return server.Serve(lis)
 }

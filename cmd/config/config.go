@@ -7,6 +7,7 @@ type Config struct {
 	SnowflakeNode string   `mapstructure:"SF_NODE"`
 	Database      Database `mapstructure:",squash"`
 	Redis         Redis    `mapstructure:",squash"`
+	RSAPair       RSAPair  `mapstructure:",squash"`
 }
 
 type Database struct {
@@ -20,6 +21,11 @@ type Database struct {
 type Redis struct {
 	URI      string `mapstructure:"REDIS_URI"`
 	Password string `mapstructure:"REDIS_PASSWORD"`
+}
+
+type RSAPair struct {
+	SecretKeyPath string `mapstructure:"SECRET_KEY_PATH"`
+	PublicKeyPath string `mapstructure:"PUBLIC_KEY_PATH"`
 }
 
 func Load() (Config, error) {
@@ -38,6 +44,8 @@ func Load() (Config, error) {
 	viper.BindEnv("DB_NAME")
 	viper.BindEnv("REDIS_URI")
 	viper.BindEnv("REDIS_PASSWORD")
+	viper.BindEnv("SECRET_KEY_PATH")
+	viper.BindEnv("PUBLIC_KEY_PATH")
 
 	var c Config
 	err := viper.Unmarshal(&c)
