@@ -32,3 +32,12 @@ type LoginInfo struct {
 	Password string
 	TOTPCode string
 }
+
+type LoginAttempt struct {
+	ID          ID
+	Attempts    int32
+	LastAttempt time.Time
+	BanExpiry   time.Time
+}
+
+type AttemptValid bool

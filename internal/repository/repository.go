@@ -19,3 +19,9 @@ type SessionRepo interface {
 type TrackRepo interface {
 	Create(context.Context, model.TrackInfo) error
 }
+
+type LoginAttemptRepo interface {
+	ByID(context.Context, model.ID) (model.LoginAttempt, error)
+	Create(context.Context, model.ID) error
+	Update(context.Context, model.LoginAttempt) error
+}

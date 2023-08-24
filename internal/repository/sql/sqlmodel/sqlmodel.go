@@ -59,7 +59,7 @@ type Session struct {
 	Exp    time.Time `bun:"exp"`
 }
 
-type LoginAttempts struct {
+type LoginAttempt struct {
 	bun.BaseModel `bun:"table:login_attempts"`
 
 	ID          int32     `bun:"id,pk,autoincrement"`
