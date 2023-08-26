@@ -48,7 +48,6 @@ func (ur *UserRepo) Create(ctx context.Context, u model.UserInfo) error {
 	}
 
 	_, err = ur.db.NewInsert().Model(&newUser).Exec(ctx)
-
 	return err
 }
 

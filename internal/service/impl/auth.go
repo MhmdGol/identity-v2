@@ -27,13 +27,15 @@ func NewAuthService(
 	userRepo repository.UserRepo,
 	sessionRepo repository.SessionRepo,
 	trackRepo repository.TrackRepo,
+	loginAttemptSvc service.LoginAttemptService,
 	jwt *jwt.JwtToken,
 ) *AuthService {
 	return &AuthService{
-		userRepo:    userRepo,
-		sessionRepo: sessionRepo,
-		trackRepo:   trackRepo,
-		jwt:         jwt,
+		userRepo:        userRepo,
+		sessionRepo:     sessionRepo,
+		trackRepo:       trackRepo,
+		loginAttemptSvc: loginAttemptSvc,
+		jwt:             jwt,
 	}
 }
 
@@ -43,10 +45,7 @@ func (as *AuthService) Login(ctx context.Context, l model.LoginInfo) (model.JwtT
 		return "", err
 	}
 
-	s, err := as.sessionRepo.ByID(ctx, user.ID)
-	if err != nil {
-		return "", err
-	}
+	s, _ := as.sessionRepo.ByID(ctx, user.ID)
 	if time.Now().UTC().Before(s.SessionExp) {
 		return "", fmt.Errorf("logout first")
 	} else if time.Now().UTC().After(s.SessionExp) {
@@ -80,13 +79,13 @@ func (as *AuthService) Login(ctx context.Context, l model.LoginInfo) (model.JwtT
 			if err2 != nil {
 				return "", err2
 			}
-			return "", err // fmt.Errorf("totp code not valid")
+			return "", fmt.Errorf("totp code not valid")
 		}
 	}
 
 	session := model.Session{
 		UserID:     user.ID,
-		SessionExp: time.Now().Add(time.Hour),
+		SessionExp: time.Now().UTC().Add(time.Hour),
 	}
 
 	err = as.sessionRepo.Add(ctx, session)
@@ -105,7 +104,7 @@ func (as *AuthService) Login(ctx context.Context, l model.LoginInfo) (model.JwtT
 	err = as.trackRepo.Create(ctx, model.TrackInfo{
 		ID:        user.ID,
 		Action:    "login",
-		Timestamp: time.Now(),
+		Timestamp: time.Now().UTC(),
 	})
 	if err != nil {
 		return "", err
@@ -117,4 +116,24 @@ func (as *AuthService) Login(ctx context.Context, l model.LoginInfo) (model.JwtT
 	}
 
 	return token, nil
+}
+
+func (as *AuthService) Logout(ctx context.Context, id model.ID) error {
+	// what if the session is already expired?
+
+	err := as.sessionRepo.Remove(ctx, id)
+	if err != nil {
+		return err
+	}
+
+	err = as.trackRepo.Create(ctx, model.TrackInfo{
+		ID:        id,
+		Action:    "logout",
+		Timestamp: time.Now().UTC(),
+	})
+	if err != nil {
+		return err
+	}
+
+	return nil
 }

@@ -21,7 +21,7 @@ func (rc *FourthFailure) Ban(ctx context.Context, id model.ID, a int32) error {
 	return rc.loginAttemptRepo.Update(ctx, model.LoginAttempt{
 		ID:          id,
 		Attempts:    a,
-		LastAttempt: time.Now(),
-		BanExpiry:   time.Now().Add(time.Minute * 30),
+		LastAttempt: time.Now().UTC(),
+		BanExpiry:   time.Now().UTC().Add(time.Minute * 30),
 	})
 }

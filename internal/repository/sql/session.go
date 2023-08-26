@@ -37,13 +37,13 @@ func (sr *SessionRepo) Add(ctx context.Context, s model.Session) error {
 
 func (sr *SessionRepo) Remove(ctx context.Context, id model.ID) error {
 	_, err := sr.db.NewDelete().Model((*sqlmodel.Session)(nil)).Where("user_id = ?", id).Exec(ctx)
-
 	return err
 }
 
 func (sr *SessionRepo) ByID(ctx context.Context, id model.ID) (model.Session, error) {
 	var session sqlmodel.Session
-	_, err := sr.db.NewSelect().Model(&session).Where("user_id = ?", id).Exec(ctx)
+	err := sr.db.NewSelect().Model(&session).Where("user_id = ?", id).Scan(ctx)
+
 	if err != nil {
 		return model.Session{}, err
 	}

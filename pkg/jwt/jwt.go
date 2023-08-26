@@ -6,6 +6,7 @@ import (
 	"identity-v2/cmd/config"
 	"identity-v2/internal/model"
 	"os"
+	"strconv"
 
 	"github.com/bwmarrin/snowflake"
 	"github.com/dgrijalva/jwt-go"
@@ -42,11 +43,12 @@ func NewJwtHandler(conf config.RSAPair) (*JwtToken, error) {
 }
 
 func (j *JwtToken) MakeToken(c model.TokenClaim) (model.JwtToken, error) {
-
+	fmt.Println(c.ID)
 	claims := jwt.MapClaims{
-		"id":    c.ID,
+		"id":    strconv.FormatInt(int64(c.ID), 10),
 		"email": c.Email,
 	}
+	fmt.Println(claims)
 
 	token := jwt.NewWithClaims(jwt.SigningMethodRS256, claims)
 	tokenString, err := token.SignedString(j.SecretKey)
@@ -58,23 +60,27 @@ func (j *JwtToken) ExtractClaims(t model.JwtToken) (model.TokenClaim, error) {
 	token, err := jwt.Parse(string(t), func(token *jwt.Token) (interface{}, error) {
 		return j.PublicKey, nil
 	})
+	fmt.Println(1, err)
 	if err != nil {
 		return model.TokenClaim{}, err
 	}
 
 	if claims, ok := token.Claims.(jwt.MapClaims); ok && token.Valid {
+		fmt.Println(2, claims)
 
 		id, ok := claims["id"].(string)
 		if !ok {
+			fmt.Println(3)
 			return model.TokenClaim{}, fmt.Errorf("invalid token: id not found")
 		}
 		sfId, _ := snowflake.ParseString(id)
 
 		email, ok := claims["email"].(string)
 		if !ok {
+			fmt.Println(4)
 			return model.TokenClaim{}, fmt.Errorf("invalid token: username not found")
 		}
-
+		fmt.Println(5, sfId.Int64())
 		return model.TokenClaim{
 			ID:    model.ID(sfId.Int64()),
 			Email: email,

@@ -118,12 +118,14 @@ func run() error {
 	userRepo := sql.NewUserRepo(db)
 	trackRepo := sql.NewTrackRepo(db)
 	sessionRepo := sql.NewSessionRepo(db)
+	loginAttemptRepo := sql.NewLoginAttemptRepo(db)
 
+	loginAttemptSvc := service.NewLoginAttempService(loginAttemptRepo)
 	userSvc := service.NewUserService(userRepo, sf)
-	authSvc := service.NewAuthService(userRepo, sessionRepo, trackRepo, j)
+	authSvc := service.NewAuthService(userRepo, sessionRepo, trackRepo, loginAttemptSvc, j)
 
 	userCtrl := controller.NewUserController(userSvc)
-	authCtrl := controller.NewAuthController(authSvc)
+	authCtrl := controller.NewAuthController(authSvc, j)
 
 	lis, err := net.Listen("tcp", fmt.Sprintf(":%s", conf.HttpPort))
 	if err != nil {

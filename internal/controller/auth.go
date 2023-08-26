@@ -6,6 +6,7 @@ import (
 	"identity-v2/internal/model"
 	authapiv1 "identity-v2/internal/proto/authapi/v1"
 	"identity-v2/internal/service"
+	"identity-v2/pkg/jwt"
 
 	"google.golang.org/genproto/googleapis/rpc/code"
 	"google.golang.org/grpc/codes"
@@ -14,6 +15,7 @@ import (
 
 type AuthController struct {
 	authSvc service.AuthService
+	jwt     *jwt.JwtToken
 	authapiv1.UnimplementedAuthServiceServer
 }
 
@@ -21,9 +23,11 @@ var _ authapiv1.AuthServiceServer = (*AuthController)(nil)
 
 func NewAuthController(
 	authSvc service.AuthService,
+	jwt *jwt.JwtToken,
 ) *AuthController {
 	return &AuthController{
 		authSvc: authSvc,
+		jwt:     jwt,
 	}
 }
 
@@ -41,4 +45,18 @@ func (ac *AuthController) Login(ctx context.Context, req *authapiv1.LoginRequest
 	return &authapiv1.LoginResponse{
 		Token: string(t),
 	}, status.Error(codes.Code(code.Code_OK), "logged in")
+}
+
+func (ac *AuthController) Logout(ctx context.Context, req *authapiv1.LogoutRequest) (*authapiv1.LogoutResponse, error) {
+	tc, err := ExtractHeader(ctx, ac.jwt)
+	if err != nil {
+		return &authapiv1.LogoutResponse{}, err
+	}
+
+	err = ac.authSvc.Logout(ctx, tc.ID)
+	if err != nil {
+		return &authapiv1.LogoutResponse{}, status.Error(codes.Code(code.Code_UNKNOWN), "logout failed")
+	}
+
+	return &authapiv1.LogoutResponse{}, status.Error(codes.Code(code.Code_OK), "logged out")
 }

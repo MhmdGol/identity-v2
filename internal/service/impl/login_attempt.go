@@ -16,26 +16,36 @@ type LoginAttemptService struct {
 
 var _ service.LoginAttemptService = (*LoginAttemptService)(nil)
 
-func NewLoginAttempService() *LoginAttemptService {
-	return &LoginAttemptService{}
+func NewLoginAttempService(
+	loginAttemptRepo repository.LoginAttemptRepo,
+) *LoginAttemptService {
+	return &LoginAttemptService{
+		loginAttemptRepo: loginAttemptRepo,
+	}
 }
 
 func (las *LoginAttemptService) CheckAttempt(ctx context.Context, id model.ID) (model.AttemptValid, error) {
 	a, err := las.loginAttemptRepo.ByID(ctx, id)
 	if err != nil {
-		return false, err
+		err2 := las.loginAttemptRepo.Create(ctx, id)
+		if err2 != nil {
+			return false, err2
+		}
 	}
+
 	if time.Now().UTC().After(a.LastAttempt.Add(time.Hour * 3)) {
 		a2 := model.LoginAttempt{
 			ID:          a.ID,
 			Attempts:    0,
-			LastAttempt: time.Time{},
-			BanExpiry:   time.Time{},
+			LastAttempt: time.Now().UTC(),
+			BanExpiry:   time.Now().UTC(),
 		}
 		las.loginAttemptRepo.Update(ctx, a2)
 		return true, nil
 	}
+
 	if time.Now().UTC().After(a.BanExpiry) {
+
 		return true, nil
 	}
 
@@ -52,13 +62,21 @@ func (las *LoginAttemptService) FailedAttempt(ctx context.Context, id model.ID) 
 
 	if attempts == 3 {
 		las.rateControl = rate.NewThirdFailure(las.loginAttemptRepo)
+		las.rateControl.Ban(ctx, id, attempts)
 	} else if attempts == 4 {
 		las.rateControl = rate.NewFourthFailure(las.loginAttemptRepo)
+		las.rateControl.Ban(ctx, id, attempts)
 	} else if attempts > 4 {
 		las.rateControl = rate.NewMoreThanFourFailure(las.loginAttemptRepo)
+		las.rateControl.Ban(ctx, id, attempts)
+	} else {
+		return las.loginAttemptRepo.Update(ctx, model.LoginAttempt{
+			ID:          id,
+			Attempts:    attempts,
+			LastAttempt: time.Now().UTC(),
+			BanExpiry:   time.Now().UTC(),
+		})
 	}
-
-	las.rateControl.Ban(ctx, id, attempts)
 
 	return nil
 }
@@ -67,7 +85,7 @@ func (las *LoginAttemptService) ResetAttempt(ctx context.Context, id model.ID) e
 	return las.loginAttemptRepo.Update(ctx, model.LoginAttempt{
 		ID:          id,
 		Attempts:    0,
-		LastAttempt: time.Time{},
-		BanExpiry:   time.Time{},
+		LastAttempt: time.Now().UTC(),
+		BanExpiry:   time.Now().UTC(),
 	})
 }

@@ -11,6 +11,7 @@ type UserService interface {
 
 type AuthService interface {
 	Login(context.Context, model.LoginInfo) (model.JwtToken, error)
+	Logout(context.Context, model.ID) error
 }
 
 type LoginAttemptService interface {
