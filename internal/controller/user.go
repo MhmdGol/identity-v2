@@ -27,6 +27,8 @@ func NewUserController(
 }
 
 func (uc *UserController) CreateUser(ctx context.Context, req *userapiv1.CreateUserRequest) (*userapiv1.CreateUserResponse, error) {
+	// logged in and active seesion
+
 	err := uc.userSvc.Create(ctx, model.RawUser{
 		UUN:      req.Uun,
 		Username: req.Username,
