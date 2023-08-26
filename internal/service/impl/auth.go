@@ -61,49 +61,25 @@ func (as *AuthService) Login(ctx context.Context, l model.LoginInfo) (model.JwtT
 		return "", fmt.Errorf("banned")
 	}
 
-	// login rate control
-
-	// la, err := as.loginAttemptRepo.ByID(ctx, user.ID)
-	// if err != nil {
-	// 	return "", err
-	// }
-	// if time.Now().UTC().After(la.LastAttempt + time.Hour) {
-
-	// }
-	// attempts := la.Attempts + 1
-
-	// if (la == model.LoginAttempt{}) {
-	// 	fmt.Println("empty")
-	// 	as.loginAttemptRepo.CreateAttempt(ctx, user.ID)
-	// } else if time.Now().UTC().Before(la.BanExpiry) {
-	// 	return "", fmt.Errorf("banned")
-	// }
-	// if the ban has expired ...
-
-	// ------------------
-
 	err = bcrypthash.ValidatePassword(user.HashedPassword, l.Password)
 	if err != nil {
 		// failed attempt
-		err := as.loginAttemptSvc.FailedAttempt(ctx, user.ID)
+		err2 := as.loginAttemptSvc.FailedAttempt(ctx, user.ID)
+		if err2 != nil {
+			return "", err2
+		}
 
-		// if attempts >= 3 {
-		// 	ban := 5 * (attempts - 2)
-		// 	as.loginAttemptRepo.UpdateAttempt(ctx, model.LoginAttempt{
-		// 		ID: la.ID,
-		// 		Attempts: la.Attempts + 1,
-		// 		LastAttempt: time.Now(),
-		// 		BanExpiry: time.Now().Add(time.Minute * 5 * (attempts - 2)),
-		// 	})
-		// }
-		// --------------
 		return "", err
 	}
 
 	if user.TOTPIsActive {
 		isValid := totp.Validate(l.TOTPCode, user.TOTPSecret)
 		if !isValid {
-			err := as.loginAttemptSvc.FailedAttempt(ctx, user.ID)
+			// failed attempt
+			err2 := as.loginAttemptSvc.FailedAttempt(ctx, user.ID)
+			if err2 != nil {
+				return "", err2
+			}
 			return "", err // fmt.Errorf("totp code not valid")
 		}
 	}
@@ -135,7 +111,10 @@ func (as *AuthService) Login(ctx context.Context, l model.LoginInfo) (model.JwtT
 		return "", err
 	}
 
-	_ = as.loginAttemptSvc.ResetAttempt(ctx, user.ID)
+	err = as.loginAttemptSvc.ResetAttempt(ctx, user.ID)
+	if err != nil {
+		return "", err
+	}
 
 	return token, nil
 }
