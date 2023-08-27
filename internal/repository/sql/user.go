@@ -84,3 +84,25 @@ func (ur *UserRepo) ByEmail(ctx context.Context, e string) (model.UserInfo, erro
 		Status:         status.Name,
 	}, nil
 }
+
+func (ur *UserRepo) Exists(ctx context.Context, e string) (bool, error) {
+	b, err := ur.db.NewSelect().Model((*sqlmodel.User)(nil)).Where("email = ?", e).Exists(ctx)
+	return b, err
+}
+
+func (ur *UserRepo) Update(ctx context.Context, user model.UserInfo) error {
+	var totpIsActiveInt int32
+	if user.TOTPIsActive {
+		totpIsActiveInt = 1
+	} else {
+		totpIsActiveInt = 0
+	}
+
+	_, err := ur.db.NewUpdate().Model((*sqlmodel.User)(nil)).
+		Set("totp_is_active = ?", totpIsActiveInt).
+		Set("totp_secret = ?", user.TOTPSecret).
+		Where("email = ?", user.Email).
+		Exec(ctx)
+
+	return err
+}

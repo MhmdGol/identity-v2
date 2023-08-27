@@ -8,6 +8,8 @@ import (
 type UserRepo interface {
 	Create(context.Context, model.UserInfo) error
 	ByEmail(context.Context, string) (model.UserInfo, error)
+	Exists(context.Context, string) (bool, error)
+	Update(context.Context, model.UserInfo) error
 }
 
 type SessionRepo interface {

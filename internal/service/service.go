@@ -8,6 +8,8 @@ import (
 type UserService interface {
 	Create(context.Context, model.RawUser) error
 	ByEmail(context.Context, string) (model.UserInfo, error)
+	Exists(context.Context, string) (bool, error)
+	SetTOTP(context.Context, string) (string, error)
 }
 
 type AuthService interface {

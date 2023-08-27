@@ -76,3 +76,40 @@ func (uc *UserCache) ByEmail(ctx context.Context, e string) (model.UserInfo, err
 
 	return user, nil
 }
+
+func (uc *UserCache) Exists(ctx context.Context, e string) (bool, error) {
+	// what if it is in cache and not in db? it returns true!
+
+	_, err := uc.redis.Get(ctx, e).Result()
+	if err == redis.Nil {
+		b, err2 := uc.userRepo.Exists(ctx, e)
+		if err2 != nil {
+			return false, err2
+		}
+
+		return b, nil
+	}
+
+	return true, nil
+}
+
+func (uc *UserCache) Update(ctx context.Context, user model.UserInfo) error {
+	err := uc.userRepo.Update(ctx, user)
+	if err != nil {
+		return err
+	}
+
+	userVal, err := json.Marshal(user)
+	if err != nil {
+		return err
+	}
+
+	userKey := user.Email
+
+	err = uc.redis.Set(ctx, userKey, userVal, time.Hour).Err()
+	if err != nil {
+		return err
+	}
+
+	return nil
+}

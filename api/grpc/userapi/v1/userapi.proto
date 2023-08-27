@@ -3,7 +3,8 @@ syntax = "proto3";
 package identity.userapi.v1;
 
 service UserService {
-    rpc CreateUser(CreateUserRequest) returns (CreateUserResponse); 
+    rpc CreateUser(CreateUserRequest) returns (CreateUserResponse);
+    rpc SetTOTP(SetTOTPRequest) returns (SetTOTPResponse);
 }
 
 message CreateUserRequest {
@@ -16,3 +17,9 @@ message CreateUserRequest {
 }
 
 message CreateUserResponse {}
+
+message SetTOTPRequest {}
+
+message SetTOTPResponse {
+    string totp_secret = 1;
+}

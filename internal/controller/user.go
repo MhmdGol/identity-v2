@@ -2,6 +2,7 @@ package controller
 
 import (
 	"context"
+	"fmt"
 	"identity-v2/internal/model"
 	userapiv1 "identity-v2/internal/proto/userapi/v1"
 	"identity-v2/internal/service"
@@ -39,19 +40,9 @@ func NewUserController(
 
 func (uc *UserController) CreateUser(ctx context.Context, req *userapiv1.CreateUserRequest) (*userapiv1.CreateUserResponse, error) {
 	// logged in and active seesion
-	tc, err := ExtractHeader(ctx, uc.jwt)
+	_, _, err := LoginPermissionCheck(ctx, uc.jwt, uc.authSvc, uc.e, false, "users", "create")
 	if err != nil {
 		return &userapiv1.CreateUserResponse{}, err
-	}
-
-	loggedin, err := uc.authSvc.CheckSession(ctx, tc.ID)
-	if err != nil || !loggedin {
-		return &userapiv1.CreateUserResponse{}, status.Error(codes.Code(code.Code_INTERNAL), "login first")
-	}
-
-	ok, err := uc.e.Enforce(tc.Email, "users", "create")
-	if err != nil || !ok {
-		return &userapiv1.CreateUserResponse{}, status.Error(codes.Code(code.Code_PERMISSION_DENIED), "not allowed")
 	}
 
 	err = uc.userSvc.Create(ctx, model.RawUser{
@@ -67,4 +58,21 @@ func (uc *UserController) CreateUser(ctx context.Context, req *userapiv1.CreateU
 	}
 
 	return &userapiv1.CreateUserResponse{}, status.Error(codes.Code(code.Code_OK), "created")
+}
+
+func (uc *UserController) SetTOTP(ctx context.Context, req *userapiv1.SetTOTPRequest) (*userapiv1.SetTOTPResponse, error) {
+	_, email, err := LoginPermissionCheck(ctx, uc.jwt, uc.authSvc, uc.e, true, "", "")
+	if err != nil {
+		return &userapiv1.SetTOTPResponse{}, err
+	}
+
+	secret, err := uc.userSvc.SetTOTP(ctx, email)
+	if err != nil {
+		fmt.Println(err)
+		return &userapiv1.SetTOTPResponse{}, status.Error(codes.Code(code.Code_INTERNAL), "something went wrong")
+	}
+
+	return &userapiv1.SetTOTPResponse{
+		TotpSecret: secret,
+	}, status.Error(codes.Code(code.Code_OK), "all good")
 }

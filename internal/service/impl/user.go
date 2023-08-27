@@ -10,6 +10,7 @@ import (
 
 	"github.com/bwmarrin/snowflake"
 	"github.com/casbin/casbin/v2"
+	"github.com/pquerna/otp/totp"
 )
 
 type UserService struct {
@@ -62,4 +63,32 @@ func (us *UserService) Create(ctx context.Context, u model.RawUser) error {
 
 func (us *UserService) ByEmail(ctx context.Context, e string) (model.UserInfo, error) {
 	return us.userRepo.ByEmail(ctx, e)
+}
+
+func (us *UserService) Exists(ctx context.Context, e string) (bool, error) {
+	return us.userRepo.Exists(ctx, e)
+}
+
+func (us *UserService) SetTOTP(ctx context.Context, e string) (string, error) {
+	user, err := us.userRepo.ByEmail(ctx, e)
+	if err != nil {
+		return "", err
+	}
+
+	userSecret, err := totp.Generate(totp.GenerateOpts{
+		Issuer:      "IdentityServer",
+		AccountName: user.Email,
+	})
+	if err != nil {
+		return "", err
+	}
+	user.TOTPIsActive = true
+	user.TOTPSecret = userSecret.Secret()
+
+	err = us.userRepo.Update(ctx, user)
+	if err != nil {
+		return "", err
+	}
+
+	return userSecret.Secret(), nil
 }
