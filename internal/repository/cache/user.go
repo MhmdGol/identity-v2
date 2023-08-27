@@ -17,9 +17,13 @@ type UserCache struct {
 
 var _ repository.UserRepo = (*UserCache)(nil)
 
-func NewUserCache(redis *redis.Client) *UserCache {
+func NewUserCache(
+	userRepo repository.UserRepo,
+	redis *redis.Client,
+) *UserCache {
 	return &UserCache{
-		redis: redis,
+		userRepo: userRepo,
+		redis:    redis,
 	}
 }
 
@@ -38,12 +42,7 @@ func (uc *UserCache) Create(ctx context.Context, u model.UserInfo) error {
 		return err
 	}
 
-	err = uc.userRepo.Create(ctx, u)
-	if err != nil {
-		return err
-	}
-
-	return nil
+	return uc.userRepo.Create(ctx, u)
 }
 
 func (uc *UserCache) ByEmail(ctx context.Context, e string) (model.UserInfo, error) {

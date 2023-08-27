@@ -7,11 +7,13 @@ import (
 
 type UserService interface {
 	Create(context.Context, model.RawUser) error
+	ByEmail(context.Context, string) (model.UserInfo, error)
 }
 
 type AuthService interface {
 	Login(context.Context, model.LoginInfo) (model.JwtToken, error)
 	Logout(context.Context, model.ID) error
+	CheckSession(context.Context, model.ID) (bool, error)
 }
 
 type LoginAttemptService interface {

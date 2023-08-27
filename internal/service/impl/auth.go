@@ -137,3 +137,12 @@ func (as *AuthService) Logout(ctx context.Context, id model.ID) error {
 
 	return nil
 }
+
+func (as *AuthService) CheckSession(ctx context.Context, id model.ID) (bool, error) {
+	s, err := as.sessionRepo.ByID(ctx, id)
+	if err != nil {
+		return false, err
+	}
+
+	return time.Now().Before(s.SessionExp), nil
+}

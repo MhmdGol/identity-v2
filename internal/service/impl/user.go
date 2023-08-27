@@ -9,22 +9,26 @@ import (
 	"time"
 
 	"github.com/bwmarrin/snowflake"
+	"github.com/casbin/casbin/v2"
 )
 
 type UserService struct {
 	userRepo repository.UserRepo
-	snow     *snowflake.Node
+	sf       *snowflake.Node
+	e        *casbin.Enforcer
 }
 
 var _ service.UserService = (*UserService)(nil)
 
 func NewUserService(
 	userRepo repository.UserRepo,
-	snow *snowflake.Node,
+	sf *snowflake.Node,
+	e *casbin.Enforcer,
 ) *UserService {
 	return &UserService{
 		userRepo: userRepo,
-		snow:     snow,
+		sf:       sf,
+		e:        e,
 	}
 }
 
@@ -34,8 +38,8 @@ func (us *UserService) Create(ctx context.Context, u model.RawUser) error {
 		return err
 	}
 
-	return us.userRepo.Create(ctx, model.UserInfo{
-		ID:             model.ID(us.snow.Generate().Int64()),
+	err = us.userRepo.Create(ctx, model.UserInfo{
+		ID:             model.ID(us.sf.Generate().Int64()),
 		UUN:            u.UUN,
 		Username:       u.Username,
 		HashedPassword: hpass,
@@ -45,4 +49,17 @@ func (us *UserService) Create(ctx context.Context, u model.RawUser) error {
 		Role:           u.Role,
 		Status:         u.Status,
 	})
+	if err != nil {
+		return err
+	}
+
+	us.e.LoadPolicy()
+	us.e.AddGroupingPolicy(u.Email, u.Role)
+	us.e.SavePolicy()
+
+	return nil
+}
+
+func (us *UserService) ByEmail(ctx context.Context, e string) (model.UserInfo, error) {
+	return us.userRepo.ByEmail(ctx, e)
 }

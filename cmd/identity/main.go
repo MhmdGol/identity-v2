@@ -3,13 +3,16 @@ package main
 import (
 	"fmt"
 	"identity-v2/cmd/config"
+	"identity-v2/internal/casbin"
 	"identity-v2/internal/controller"
 	authapiv1 "identity-v2/internal/proto/authapi/v1"
 	userapiv1 "identity-v2/internal/proto/userapi/v1"
+	"identity-v2/internal/repository/cache"
 	"identity-v2/internal/repository/sql"
 	service "identity-v2/internal/service/impl"
 	"identity-v2/internal/store"
 	"identity-v2/pkg/jwt"
+	"identity-v2/pkg/redis"
 	"log"
 	"net"
 	"os"
@@ -49,6 +52,13 @@ func run() error {
 	}
 
 	j, err := jwt.NewJwtHandler(conf.RSAPair)
+	if err != nil {
+		return err
+	}
+
+	rds := redis.NewRedisClient(conf)
+
+	e, err := casbin.NewEnforcer(conf)
 	if err != nil {
 		return err
 	}
@@ -116,15 +126,23 @@ func run() error {
 	// --------------------------------------------------------------------------------
 
 	userRepo := sql.NewUserRepo(db)
-	trackRepo := sql.NewTrackRepo(db)
+	userCache := cache.NewUserCache(userRepo, rds)
+
 	sessionRepo := sql.NewSessionRepo(db)
+	sessionCache := cache.NewSessionCache(sessionRepo, rds)
+
+	trackRepo := sql.NewTrackRepo(db)
 	loginAttemptRepo := sql.NewLoginAttemptRepo(db)
 
 	loginAttemptSvc := service.NewLoginAttempService(loginAttemptRepo)
-	userSvc := service.NewUserService(userRepo, sf)
-	authSvc := service.NewAuthService(userRepo, sessionRepo, trackRepo, loginAttemptSvc, j)
+	userSvc := service.NewUserService(userCache, sf, e)
+	authSvc := service.NewAuthService(userCache, sessionCache, trackRepo, loginAttemptSvc, j)
 
-	userCtrl := controller.NewUserController(userSvc)
+	if err := InsertAdmin(userSvc, sf, e); err != nil {
+		fmt.Println(err)
+	}
+
+	userCtrl := controller.NewUserController(userSvc, authSvc, j, e)
 	authCtrl := controller.NewAuthController(authSvc, j)
 
 	lis, err := net.Listen("tcp", fmt.Sprintf(":%s", conf.HttpPort))
