@@ -63,67 +63,7 @@ func run() error {
 		return err
 	}
 
-	// --------------------------------------------------------------------------------
-
-	// _, err = db.NewInsert().Model(&sqlmodel.Role{
-	// 	Name: "staff",
-	// }).Exec(context.Background())
-	// if err != nil {
-	// 	return err
-	// }
-	// _, err = db.NewInsert().Model(&sqlmodel.Status{
-	// 	Name: "active",
-	// }).Exec(context.Background())
-	// if err != nil {
-	// 	return err
-	// }
-
-	// var role sqlmodel.Role
-	// err = db.NewSelect().Model(&role).Where("name = ?", "staff").Scan(context.Background())
-	// if err != nil {
-	// 	return err
-	// }
-
-	// fmt.Println(role)
-
-	// var status sqlmodel.Status
-	// err = db.NewSelect().Model(&status).Where("name = ?", "active").Scan(context.Background())
-	// if err != nil {
-	// 	return err
-	// }
-
-	// fmt.Println(status)
-
-	// user := &sqlmodel.User{
-	// 	ID:             sf.Generate().Int64(),
-	// 	UUN:            "A123",
-	// 	Username:       "Mhmd",
-	// 	HashedPassword: "hashpasshash",
-	// 	Email:          "mhmd@gol.com",
-	// 	Created_at:     time.Now(),
-	// 	TOTPSecret:     "totpKey",
-	// 	Role:           role.ID,
-	// 	Status:         status.ID,
-	// }
-
-	// _, err = db.NewInsert().Model(user).Exec(context.Background())
-	// if err != nil {
-	// 	return err
-	// }
-
-	// userSecret, _ := totp.Generate(totp.GenerateOpts{
-	// 	Issuer:      "IdentityServer",
-	// 	AccountName: "mhmd",
-	// })
-
-	// fmt.Println(userSecret.Secret())
-
-	// isValid := totp.Validate("751994", "XVVKYV5ARYAMEAKE465JXX25AQTKLO73")
-	// if !isValid {
-	// 	fmt.Println("Failed")
-	// }
-
-	// --------------------------------------------------------------------------------
+	// ------------- dependency injection -------------------------------------
 
 	userRepo := sql.NewUserRepo(db)
 	userCache := cache.NewUserCache(userRepo, rds)
@@ -144,6 +84,8 @@ func run() error {
 
 	userCtrl := controller.NewUserController(userSvc, authSvc, j, e)
 	authCtrl := controller.NewAuthController(authSvc, j)
+
+	// ------------------------------------------------------------------------
 
 	lis, err := net.Listen("tcp", fmt.Sprintf(":%s", conf.HttpPort))
 	if err != nil {
