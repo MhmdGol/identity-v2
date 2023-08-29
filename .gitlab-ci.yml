@@ -11,7 +11,7 @@ before_script:
 build:
   stage: build
   script:
-    - go build -o identity ./cmd/identity/main.go
+    - go build -o identity ./cmd/identity/*.go
 
 test:
   stage: test
