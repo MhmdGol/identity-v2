@@ -1,0 +1,25 @@
+image: golang:1.20
+
+stages:
+  - build
+  - test
+  - deploy
+
+before_script:
+  - go mod download
+
+build:
+  stage: build
+  script:
+    - go build -o identity ./cmd/identity/main.go
+
+test:
+  stage: test
+  script: go test ./test
+
+deploy_staging:
+  stage: deploy
+  script:
+    - ./identity
+  only:
+    - master
