@@ -2,7 +2,6 @@ package main
 
 import (
 	"context"
-	"fmt"
 	"identity-v2/internal/model"
 	"identity-v2/internal/service"
 
@@ -12,12 +11,10 @@ import (
 
 func InsertAdmin(userSvc service.UserService, sf *snowflake.Node, e *casbin.Enforcer) error {
 	b, err := userSvc.Exists(context.Background(), "su@gmail.com")
-	fmt.Println(1, b, err)
 	if err != nil {
 		return err
 	}
 	if !b {
-		fmt.Println(2)
 		e.LoadPolicy()
 		e.AddGroupingPolicy("su@gmail.com", "admin")
 		e.SavePolicy()
