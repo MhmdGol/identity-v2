@@ -7,7 +7,6 @@ stages:
 
 before_script:
   - go mod download
-  - export $(cat .env | xargs)
 
 build:
   stage: build
