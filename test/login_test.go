@@ -76,8 +76,8 @@ func TestLogin_WithoutTOTP(t *testing.T) {
 		Created_at:     time.Now(),
 		TOTPIsActive:   false,
 		TOTPSecret:     "",
-		Role:           2,
-		Status:         1,
+		RoleID:         2,
+		StatusID:       1,
 	}).Exec(context.Background())
 	if err != nil {
 		t.Errorf("user insertion error")

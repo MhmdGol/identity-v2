@@ -3,10 +3,10 @@
 CREATE TABLE tracks(
     id INT IDENTITY(1,1) PRIMARY KEY,
     user_id BIGINT,
-    action INT,
+    action_id INT,
     action_time DATETIME,
     FOREIGN KEY (user_id) REFERENCES users (id),
-    FOREIGN KEY (action) REFERENCES actions (id)
+    FOREIGN KEY (action_id) REFERENCES actions (id)
 );
 -- +goose StatementEnd
 

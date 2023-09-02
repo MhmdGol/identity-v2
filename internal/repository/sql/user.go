@@ -22,6 +22,7 @@ func NewUserRepo(db *bun.DB) *UserRepo {
 }
 
 func (ur *UserRepo) Create(ctx context.Context, u model.UserInfo) error {
+	// it can be deleted
 	var role sqlmodel.Role
 	err := ur.db.NewSelect().Model(&role).Where("name = ?", u.Role).Scan(ctx)
 	if err != nil {
@@ -33,6 +34,7 @@ func (ur *UserRepo) Create(ctx context.Context, u model.UserInfo) error {
 	if err != nil {
 		return err
 	}
+	// -----------------
 
 	newUser := sqlmodel.User{
 		ID:             int64(u.ID),
@@ -43,8 +45,8 @@ func (ur *UserRepo) Create(ctx context.Context, u model.UserInfo) error {
 		Created_at:     u.Created_at,
 		TOTPIsActive:   u.TOTPIsActive,
 		TOTPSecret:     "",
-		Role:           role.ID,
-		Status:         status.ID,
+		RoleID:         role.ID,
+		StatusID:       status.ID,
 	}
 
 	_, err = ur.db.NewInsert().Model(&newUser).Exec(ctx)
@@ -53,20 +55,12 @@ func (ur *UserRepo) Create(ctx context.Context, u model.UserInfo) error {
 
 func (ur *UserRepo) ByEmail(ctx context.Context, e string) (model.UserInfo, error) {
 	var user sqlmodel.User
-	err := ur.db.NewSelect().Model(&user).Where("email = ?", e).Scan(ctx)
-	if err != nil {
-		return model.UserInfo{}, err
-	}
-
-	var role sqlmodel.Role
-	err = ur.db.NewSelect().Model(&role).Where("id = ?", user.Role).Scan(ctx)
-	if err != nil {
-		return model.UserInfo{}, err
-	}
-
-	var status sqlmodel.Status
-	err = ur.db.NewSelect().Model(&status).Where("id = ?", user.Status).Scan(ctx)
-
+	err := ur.db.NewSelect().
+		Model(&user).
+		Relation("Role").
+		Relation("Status").
+		Where("email = ?", e).
+		Scan(ctx)
 	if err != nil {
 		return model.UserInfo{}, err
 	}
@@ -80,8 +74,8 @@ func (ur *UserRepo) ByEmail(ctx context.Context, e string) (model.UserInfo, erro
 		Created_at:     user.Created_at,
 		TOTPIsActive:   user.TOTPIsActive,
 		TOTPSecret:     user.TOTPSecret,
-		Role:           role.Name,
-		Status:         status.Name,
+		Role:           user.Role.Name,
+		Status:         user.Status.Name,
 	}, nil
 }
 

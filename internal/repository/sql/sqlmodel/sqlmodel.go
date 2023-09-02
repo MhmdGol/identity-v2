@@ -17,8 +17,10 @@ type User struct {
 	Created_at     time.Time `bun:"created_at"`
 	TOTPIsActive   bool      `bun:"totp_is_active"`
 	TOTPSecret     string    `bun:"totp_secret"`
-	Role           int32     `bun:"role_id"`
-	Status         int32     `bun:"status_id"`
+	RoleID         int32     `bun:"role_id"`
+	Role           Role      `bun:"rel:belongs-to,join:role_id=id"`
+	StatusID       int32     `bun:"status_id"`
+	Status         Status    `bun:"rel:belongs-to,join:status_id=id"`
 }
 
 type Role struct {
@@ -40,7 +42,8 @@ type Track struct {
 
 	ID         int32     `bun:"id,pk,autoincrement"`
 	UserID     int64     `bun:"user_id"`
-	Action     int32     `bun:"action"`
+	ActionID   int32     `bun:"action_id"`
+	Action     Action    `bun:"rel:belongs-to,join:action_id=id"`
 	ActionTime time.Time `bun:"action_time"`
 }
 

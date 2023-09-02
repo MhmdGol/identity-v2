@@ -30,7 +30,7 @@ func (tr *TrackRepo) Create(ctx context.Context, t model.TrackInfo) error {
 
 	newTrack := sqlmodel.Track{
 		UserID:     int64(t.ID),
-		Action:     action.ID,
+		ActionID:   action.ID,
 		ActionTime: t.Timestamp,
 	}
 

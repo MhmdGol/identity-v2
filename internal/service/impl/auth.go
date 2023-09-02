@@ -93,6 +93,8 @@ func (as *AuthService) Login(ctx context.Context, l model.LoginInfo) (model.JwtT
 		return "", err
 	}
 
+	// from now he is logged in. then if anything below fails, user doesnt get the token thus a bad state reached
+
 	token, err := as.jwt.MakeToken(model.TokenClaim{
 		ID:    user.ID,
 		Email: user.Email,
